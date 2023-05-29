@@ -1,0 +1,77 @@
+# A Brainfuck interpreter
+
+# the values of all identifiers are initialized to 0 before the program starts
+
+# read a integer n
+while 47 < (c = getc) & c < 58
+	n = n * 10 + c - 48;
+;
+
+# read commands
+cmd = alloc n;
+i = 0;
+while end ^ 1
+	c = getc;
+	if c == 60 # '<'
+	   | c == 62 # '>'
+	   | c == 43 # '+'
+	   | c == 45 # '-'
+	   | c == 44 # ','
+	   | c == 46 # '.'
+	   | c == 91 # '['
+	   | c == 93 # ']'
+	   | c == 36 # '$' is the terminator
+		cmd[i] = c;
+		i = i + 1;
+	;
+	end = c == 36;
+;
+getc; # eat '\n'
+
+# zeros
+arr = alloc n;
+i = 0;
+while i < n
+	arr[i] = 0;
+	i = i + 1;
+;
+
+cmd_ptr = dat_ptr = 0;
+while cmd[cmd_ptr] == 36 ^ 1
+	if cmd_ptr < 0 | dat_ptr < 0 # underflow is not allowed
+		while 1 putc 120; ;
+	;
+	if cmd[cmd_ptr] == 60
+		dat_ptr = dat_ptr - 1;
+	elif cmd[cmd_ptr] == 62
+		dat_ptr = dat_ptr + 1;
+	elif cmd[cmd_ptr] == 43
+		arr[dat_ptr] = (arr[dat_ptr] + 1) & 255;
+	elif cmd[cmd_ptr] == 45
+		arr[dat_ptr] = (arr[dat_ptr] - 1) & 255;
+	elif cmd[cmd_ptr] == 44
+		arr[dat_ptr] = getc;
+	elif cmd[cmd_ptr] == 46
+		putc arr[dat_ptr];
+	elif cmd[cmd_ptr] == 91
+		if arr[dat_ptr] == 0
+			s = 0;
+			while s = s + (cmd[cmd_ptr] == 91) - (cmd[cmd_ptr] == 93)
+				cmd_ptr = cmd_ptr + 1;
+			;
+		;
+	elif cmd[cmd_ptr] == 93
+		if arr[dat_ptr] == 0 ^ 1
+			s = 0;
+			while s = s + (cmd[cmd_ptr] == 93) - (cmd[cmd_ptr] == 91)
+				cmd_ptr = cmd_ptr - 1;
+			;
+		;
+	elif 1 # should never happen
+		while 1 putc 88; ;
+	;
+	cmd_ptr = cmd_ptr + 1;
+;
+
+free arr;
+free cmd;
