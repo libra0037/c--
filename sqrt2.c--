@@ -1,0 +1,204 @@
+# This program reads an integer n and print sqrt(2) with n digits.
+# The algorithm is based on continued fractions of sqrt(2) and matrix multiplication.
+
+while 47 < (c = getc) & c < 58
+	n = n * 10 + c - 48;
+;
+p = 1;
+(a = alloc(len_a = 1))[0] = 1;
+(b = alloc(len_b = 1))[0] = 2;
+while p < n
+	mul1 = mul2 = a;
+	len1 = len2 = len_a;
+	mul3 = alloc(len3 = len1 + len2 + 5);
+	i = 0;
+	while i < len3
+		mul3[i] = 0;
+		i = i + 1;
+	;
+	i = 0;
+	while i < len3
+		j = 0;
+		while j < i + 1
+			if j < len1 t1 = mul1[j];
+			elif 1 t1 = 0;
+			;
+			if i - j < len2 t2 = mul2[i - j];
+			elif 1 t2 = 0;
+			;
+			mul3[i] = mul3[i] + t1 * t2;
+			k = i;
+			while 9999 < (t3 = mul3[k])
+				mul3[k + 1] = mul3[k + 1] + t3 / 10000;
+				mul3[k] = t3 - t3 / 10000 * 10000;
+				k = k + 1;
+			;
+			j = j + 1;
+		;
+		i = i + 1;
+	;
+	while mul3[len3 - 1] == 0 len3 = len3 - 1; ;
+	a2 = mul3; len_a2 = len3;
+	mul1 = mul2 = b;
+	len1 = len2 = len_b;
+	mul3 = alloc(len3 = len1 + len2 + 5);
+	i = 0;
+	while i < len3
+		mul3[i] = 0;
+		i = i + 1;
+	;
+	i = 0;
+	while i < len3
+		j = 0;
+		while j < i + 1
+			if j < len1 t1 = mul1[j];
+			elif 1 t1 = 0;
+			;
+			if i - j < len2 t2 = mul2[i - j];
+			elif 1 t2 = 0;
+			;
+			mul3[i] = mul3[i] + t1 * t2;
+			k = i;
+			while 9999 < (t3 = mul3[k])
+				mul3[k + 1] = mul3[k + 1] + t3 / 10000;
+				mul3[k] = t3 - t3 / 10000 * 10000;
+				k = k + 1;
+			;
+			j = j + 1;
+		;
+		i = i + 1;
+	;
+	while mul3[len3 - 1] == 0 len3 = len3 - 1; ;
+	b2 = mul3; len_b2 = len3;
+	mul1 = a; mul2 = b;
+	len1 = len_a; len2 = len_b;
+	mul3 = alloc(len3 = len1 + len2 + 5);
+	i = 0;
+	while i < len3
+		mul3[i] = 0;
+		i = i + 1;
+	;
+	i = 0;
+	while i < len3
+		j = 0;
+		while j < i + 1
+			if j < len1 t1 = mul1[j];
+			elif 1 t1 = 0;
+			;
+			if i - j < len2 t2 = mul2[i - j];
+			elif 1 t2 = 0;
+			;
+			mul3[i] = mul3[i] + t1 * t2;
+			k = i;
+			while 9999 < (t3 = mul3[k])
+				mul3[k + 1] = mul3[k + 1] + t3 / 10000;
+				mul3[k] = t3 - t3 / 10000 * 10000;
+				k = k + 1;
+			;
+			j = j + 1;
+		;
+		i = i + 1;
+	;
+	while mul3[len3 - 1] == 0 len3 = len3 - 1; ;
+	ab = mul3; len_ab = len3;
+	free a;
+	free b;
+	a = alloc(len_a = len_b2 + 5);
+	i = 0;
+	while i < len_a
+		a[i] = 0;
+		i = i + 1;
+	;
+	i = 0;
+	while i < len_a
+		if i < len_a2 t1 = a2[i];
+		elif 1 t1 = 0;
+		;
+		if i < len_b2 t2 = b2[i];
+		elif 1 t2 = 0;
+		;
+		a[i] = a[i] + t1 + t2;
+		if 9999 < a[i]
+			a[i] = a[i] - 10000;
+			a[i + 1] = a[i + 1] + 1;
+		;
+		i = i + 1;
+	;
+	while a[len_a - 1] == 0 len_a = len_a - 1; ;
+	b = alloc(len_b = len_b2 + 5);
+	i = 0;
+	while i < len_b
+		b[i] = 0;
+		i = i + 1;
+	;
+	i = 0;
+	while i < len_b
+		if i < len_ab t1 = ab[i];
+		elif 1 t1 = 0;
+		;
+		if i < len_b2 t2 = b2[i];
+		elif 1 t2 = 0;
+		;
+		b[i] = b[i] + (t1 + t2) * 2;
+		if 19999 < b[i]
+			b[i] = b[i] - 20000;
+			b[i + 1] = b[i + 1] + 2;
+		;
+		if 9999 < b[i]
+			b[i] = b[i] - 10000;
+			b[i + 1] = b[i + 1] + 1;
+		;
+		i = i + 1;
+	;
+	while b[len_b - 1] == 0 len_b = len_b - 1; ;
+	free a2;
+	free b2;
+	free ab;
+	p = p * 2;
+;
+putc 49;
+putc 46;
+i = 0;
+while i < n
+	j = 0;
+	while j < len_a
+		a[j] = a[j] * 10;
+		j = j + 1;
+	;
+	j = 0;
+	while j < len_a
+		t1 = a[j];
+		a[j + 1] = a[j + 1] + t1 / 10000;
+		a[j] = t1 - t1 / 10000 * 10000;
+		j = j + 1;
+		if (0 < a[j]) & (len_a < j + 1) len_a = j + 1; ;
+	;
+	c = 48;
+	t1 = 1;
+	while t1
+		if len_a < len_b j = len_b - 1;
+		elif 1 j = len_a - 1;
+		;
+		while a[j] == b[j] j = j - 1; ;
+		if b[j] < a[j]
+			j = 0;
+			while j < len_a
+				a[j] = a[j] - b[j];
+				if a[j] < 0
+					a[j] = a[j] + 10000;
+					a[j + 1] = a[j + 1] - 1;
+				;
+				j = j + 1;
+			;
+			if a[len_a - 1] == 0 len_a = len_a - 1; ;
+			c = c + 1;
+		elif 1
+			t1 = 0;
+		;
+	;
+	putc c;
+	i = i + 1;
+;
+putc 10;
+free a;
+free b;
