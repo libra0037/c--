@@ -16,7 +16,7 @@ To compiles C-- to LLVM IR, run
 ./c-- name.c-- name.ll
 ```
 
-To generate a native executable (e.g. x86), run
+To generate a native (e.g. x86) executable from LLVM IR, run
 
 ```
 llc -march=x86 name.ll
@@ -25,7 +25,7 @@ gcc -m32 name.s -o name
 
 ### C-- Grammar
 
-\*See *bf.c--* for examples.\*
+\*See *sqrt2.c--* and *bf.c--* for examples.\*
 
 All operands and results are 32-bit signed integers, equivalent to `int` in C/C++. The type turns to `int *` temporarily when accessing memory with square brackets.
 
