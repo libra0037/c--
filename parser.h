@@ -1,6 +1,5 @@
 #include <stack>
 #include <set>
-#include <map>
 #include <unordered_map>
 #include <functional>
 
@@ -48,8 +47,7 @@ struct Token
 	int type, val;
 };
 
-using change_list = std::set<int>;
-using tails_attr = std::pair<int, std::map<int, int*>*>;
+using tails_attr = std::pair<int, std::set<std::pair<int, int*>>*>;
 using code_generator = std::function<tails_attr(int&, int*)>;
 
 struct Node
@@ -62,7 +60,7 @@ struct Node
 	}
 	int state;
 	int line;
-	change_list chg_list;
+	std::set<int> chg_list;
 	code_generator *gen;
 };
 
@@ -80,5 +78,5 @@ private:
 	std::unordered_map<std::string, int> sym_tab;
 	std::stack<Node> stk;
 	int regs, labels;
-	std::function<void()> final_code;
+	std::function<void()> output_code;
 };
