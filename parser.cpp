@@ -73,30 +73,27 @@ constexpr const char go24[] = {nt_factor, 15, nt_rval, 14, nt_exp, 60};
 constexpr const char go25[] = {nt_factor, 15, nt_rval, 14, nt_exp, 13, nt_if_stmt, 12};
 constexpr const char *Goto[] = {go4, go25, 0, 0, 0, go17, go18, 0, go1, go2, go3, go19, 0, 0, 0, 0, go20, go5, go6, 0, 0, 0, 0, 0, go21, 0, 0, go8, go9, go10, go11, go12, go13, go14, go15, go16, go22, 0, go25, go25, go23, 0, go7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, go25, 0, 0, go24, 0};
 
-constexpr const char char_type[128] = {ENDF, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, AND, Default, LPARE, RPARE, TIMES, PLUS, Default, MINUS, Default, DIV, INT, INT, INT, INT, INT, INT, INT, INT, INT, INT, Default, SEMI, LT, ASSIGN, Default, Default, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, LBRAC, Default, RBRAC, XOR, ID, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, Default, OR, Default, Default, Default};
+constexpr const char char_type[96] = {Default, Default, Default, Default, Default, Default, AND, Default, LPARE, RPARE, TIMES, PLUS, Default, MINUS, Default, DIV, INT, INT, INT, INT, INT, INT, INT, INT, INT, INT, Default, SEMI, LT, ASSIGN, Default, Default, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, LBRAC, Default, RBRAC, XOR, ID, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, Default, OR, Default, Default, Default};
 constexpr const std::pair<const char*, int> reserved_word[8] = {{"free", FREE}, {"putc", PUTC}, {"while", WHILE}, {"getc", GETC}, {"alloc", ALLOC}, {"", Default}, {"elif", ELIF}, {"if", IF}};
 constexpr const char *token_name[25] = {"<End of File>", "<Integer>", "<Identifier>", "if", "elif", "while", "getc", "putc", "alloc", "free", "'='", "'<'", "'=='", "'+'", "'-'", "'*'", "'/'", "'&'", "'|'", "'^'", "'('", "')'", "'['", "']'", "';'"};
 constexpr const char *binary_op[9] = {"mul", "sdiv", "add", "sub", "icmp slt", "icmp eq", "and", "xor", "or"};
 
 Token Parser::scan()
 {
-	int t = 1, val = 0;
-	do
+	int type, val = 0;
+	for(int t = 1; ;)
 	{
 		nowc = nxtc;
 		if(nxtc != EOF)nxtc = getchar();
 		now_line += (nowc == '\n');
-		if(nowc == EOF)t = 0;
-		else if(t == 2)t -= (nowc == '\n');
-		else
+		if(nowc == EOF) { type = ENDF; break; }
+		t ^= (nowc == (t ? '#' : '\n'));
+		if(t && !isspace(nowc))
 		{
-			if(nowc == '#')t = 2;
-			else if(!isspace(nowc))t = 0;
+			type = unsigned(nowc - 32) < 96 ? char_type[nowc - 32] : Default;
+			break;
 		}
-	} while(t);
-	int type;
-	if(nowc == EOF)type = ENDF;
-	else type = unsigned(nowc) < 128 ? char_type[nowc] : Default;
+	}
 	if(type == ID)
 	{
 		int hash = ((nowc * 39) >> 4) & 7;
@@ -122,10 +119,13 @@ Token Parser::scan()
 			val = val * 10 + nowc - '0';
 		}
 	}
-	else if(type == ASSIGN && nxtc == '=')
+	else if(type == ASSIGN)
 	{
-		nowc = nxtc, nxtc = getchar();
-		type = EQ;
+		if(nxtc == '=')
+		{
+			nowc = nxtc, nxtc = getchar();
+			type = EQ;
+		}
 	}
 	else if(type == Default)val = nowc;
 	return {type, val};
@@ -183,7 +183,7 @@ void Parser::reduce(int rule)
 				printf("%%r%d = phi i32", reg_list[id] = regs++);
 				int k = 0, sz = tail.second->size();
 				for(auto lab : *tail.second)printf(" [%%r%d, %%L%d]%c", lab.second[id], lab.first,
-												   ",\n"[++k == sz]);
+												   ++k < sz ? ',' : '\n');
 			}
 			for(auto lab : *tail.second)delete lab.second;
 			delete tail.second;
