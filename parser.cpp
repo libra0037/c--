@@ -1,7 +1,6 @@
 #include "parser.h"
 #include <cctype>
 #include <cstring>
-#include <cstdarg>
 
 // LALR(1) automaton constructed by bison (GNU Bison) 3.0.4
 constexpr const char ac0[] = {Default, 0};
@@ -74,7 +73,7 @@ constexpr const char go24[] = {nt_factor, 15, nt_rval, 14, nt_exp, 60};
 constexpr const char go25[] = {nt_factor, 15, nt_rval, 14, nt_exp, 13, nt_if_stmt, 12};
 constexpr const char *Goto[] = {go4, go25, 0, 0, 0, go17, go18, 0, go1, go2, go3, go19, 0, 0, 0, 0, go20, go5, go6, 0, 0, 0, 0, 0, go21, 0, 0, go8, go9, go10, go11, go12, go13, go14, go15, go16, go22, 0, go25, go25, go23, 0, go7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, go25, 0, 0, go24, 0};
 
-constexpr const char char_type[128] = {Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, AND, Default, LPARE, RPARE, TIMES, PLUS, Default, MINUS, Default, DIV, INT, INT, INT, INT, INT, INT, INT, INT, INT, INT, Default, SEMI, LT, ASSIGN, Default, Default, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, LBRAC, Default, RBRAC, XOR, ID, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, Default, OR, Default, Default, Default};
+constexpr const char char_type[128] = {ENDF, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, Default, AND, Default, LPARE, RPARE, TIMES, PLUS, Default, MINUS, Default, DIV, INT, INT, INT, INT, INT, INT, INT, INT, INT, INT, Default, SEMI, LT, ASSIGN, Default, Default, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, LBRAC, Default, RBRAC, XOR, ID, Default, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, ID, Default, OR, Default, Default, Default};
 constexpr const std::pair<const char*, int> reserved_word[8] = {{"free", FREE}, {"putc", PUTC}, {"while", WHILE}, {"getc", GETC}, {"alloc", ALLOC}, {"", Default}, {"elif", ELIF}, {"if", IF}};
 constexpr const char *token_name[25] = {"<End of File>", "<Integer>", "<Identifier>", "if", "elif", "while", "getc", "putc", "alloc", "free", "'='", "'<'", "'=='", "'+'", "'-'", "'*'", "'/'", "'&'", "'|'", "'^'", "'('", "')'", "'['", "']'", "';'"};
 constexpr const char *binary_op[9] = {"mul", "sdiv", "add", "sub", "icmp slt", "icmp eq", "and", "xor", "or"};
@@ -128,6 +127,7 @@ Token Parser::scan()
 		nowc = nxtc, nxtc = getchar();
 		type = EQ;
 	}
+	else if(type == Default)val = nowc;
 	return {type, val};
 }
 
@@ -136,7 +136,7 @@ void Parser::reduce(int rule)
 	Node n1, n2, n3, n4, n6;
 	int sym = -1;
 	int line = -1;
-	change_list chg_list;
+	std::set<int> chg_list;
 	code_generator *gen = nullptr;
 	switch(rule)
 	{
@@ -144,13 +144,18 @@ void Parser::reduce(int rule)
 		stk.pop();
 		n1 = std::move(stk.top()); stk.pop();
 		stk.pop(); // empty the stack
-		final_code = [this, gen = n1.gen]()
+		output_code = [this, gen = n1.gen]()
 		{
-			regs = 0, labels = 1;
-			puts("define i32 @main() {\nL0:");
+			puts("declare i32 @getchar() nounwind\n"
+				 "declare i32 @putchar(i32) nounwind\n"
+				 "declare i32 @malloc(i32) nounwind\n"
+				 "declare void @free(i32) nounwind\n"
+				 "define i32 @main() {\n"
+				 "L0:\n"
+				 "%r0 = add i32 0, 0");
+			regs = 1, labels = 1;
 			int block = 0, *reg_list = new int[id_num];
-			for(auto &it : sym_tab)printf("%%r%d = add i32 0, 0 ; %s\n",
-										  reg_list[it.second] = regs++, it.first.c_str());
+			memset(reg_list, 0, id_num * sizeof(int));
 			(*gen)(block, reg_list); delete gen;
 			puts("ret i32 0\n}");
 			delete reg_list;
@@ -170,7 +175,7 @@ void Parser::reduce(int rule)
 			int *br_list = new int[id_num];
 			memcpy(br_list, reg_list, id_num * sizeof(int));
 			tails_attr tail = (*n2.gen)(block, br_list); delete n2.gen;
-			(*tail.second)[block] = br_list;
+			tail.second->insert({block, br_list});
 			printf("br label %%L%d\nL%d: ; end of if-statement in line %d\n",
 				   tail.first, block = tail.first, n2.line);
 			for(int id : n2.chg_list)
@@ -267,7 +272,7 @@ void Parser::reduce(int rule)
 		{
 			printf("; if-statement in line %d\n", line);
 			int tail = (*gen2)(block, reg_list).first; delete gen2;
-			auto tab = new std::map<int, int*>;
+			auto tab = new std::set<std::pair<int, int*>>;
 			int l1 = labels++, l2 = labels++, l3 = labels++;
 			printf("%%r%d = icmp ne i32 %%r%d, 0\n"
 				   "br i1 %%r%d, label %%L%d, label %%L%d\n"
@@ -276,7 +281,7 @@ void Parser::reduce(int rule)
 			int *br_list = new int[id_num];
 			memcpy(br_list, reg_list, id_num * sizeof(int));
 			(*gen3)(l1, br_list); delete gen3;
-			(*tab)[l1] = br_list;
+			tab->insert({l1, br_list});
 			printf("br label %%L%d\nL%d:\n", l3, block = l2);
 			return {l3, tab};
 		});
@@ -304,7 +309,7 @@ void Parser::reduce(int rule)
 			int *br_list = new int[id_num];
 			memcpy(br_list, reg_list, id_num * sizeof(int));
 			(*gen4)(l1, br_list); delete gen4;
-			(*tail1.second)[l1] = br_list;
+			tail1.second->insert({l1, br_list});
 			printf("br label %%L%d\nL%d:\n", tail1.first, block = l2);
 			return tail1;
 		});
@@ -402,8 +407,8 @@ void Parser::reduce(int rule)
 		gen = new code_generator([this, gen = n2.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail = (*gen)(block, reg_list).first; delete gen;
-			printf("call void @free(i32 %%r%d)\n%%r%d = add i32 0, 0\n", tail, regs);
-			return {regs++, nullptr};
+			printf("call void @free(i32 %%r%d)\n", tail);
+			return {0, nullptr};
 		});
 		break;
 	case 14: // rval <- rval TIMES rval
@@ -507,7 +512,7 @@ void Parser::reduce(int rule)
 
 int Parser::parse()
 {
-	stk.emplace(0, 0, change_list(), nullptr);
+	stk.emplace(0, 0, std::set<int>(), nullptr);
 	now_line = 1;
 	nxtc = getchar();
 	id_num = 0;
@@ -524,7 +529,7 @@ int Parser::parse()
 		{
 			if(Action[top.state][i] == tk.type)
 			{ // shift
-				stk.emplace(Action[top.state][i + 1], now_line, change_list(),
+				stk.emplace(Action[top.state][i + 1], now_line, std::set<int>(),
 					(code_generator*)(ptrdiff_t)tk.val);
 				tk = scan();
 				break;
@@ -543,10 +548,6 @@ int Parser::parse()
 			}
 		}
 	} while(stk.size());
-	puts("declare i32 @getchar() nounwind");
-	puts("declare i32 @putchar(i32) nounwind");
-	puts("declare i32 @malloc(i32) nounwind");
-	puts("declare void @free(i32) nounwind");
-	final_code();
+	output_code();
 	return 0;
 }
