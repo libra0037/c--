@@ -184,8 +184,7 @@ void Parser::reduce(int rule)
 		break;
 	case 4: // stmt_seq <- $epsilon
 		sym = nt_stmt_seq;
-		line = 0;
-		gens.push_back([](int&, int*)->tails_attr { return {0, nullptr}; });
+		gen = 0;
 		break;
 	case 5: // if_stmt <- IF exp stmt_seq
 		n3 = std::move(stk.top()); stk.pop();
@@ -442,6 +441,7 @@ void Parser::reduce(int rule)
 int Parser::parse()
 {
 	stk.emplace(0, 0, 0, std::vector<int>{});
+	gens.push_back([](int&, int*)->tails_attr { return {0, nullptr}; });
 	now_line = 1;
 	nxtc = getchar();
 	Token tk = scan();
