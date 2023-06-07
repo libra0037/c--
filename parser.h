@@ -1,6 +1,5 @@
 #include <stack>
 #include <vector>
-#include <set>
 #include <unordered_map>
 #include <functional>
 
@@ -59,10 +58,8 @@ struct Node
 		: state(s), line(l), gen(g), chg_list(std::move(c))
 	{
 	}
-	int state;
-	int line;
-	int gen;
-	std::set<int> chg_list;
+	int state, line, gen;
+	std::vector<int> chg_list;
 };
 
 class Parser
@@ -75,9 +72,7 @@ private:
 private:
 	int now_line;
 	int nowc, nxtc;
-	int id_num;
 	std::unordered_map<std::string, int> sym_tab;
 	std::stack<Node> stk;
 	std::vector<code_generator> gens;
-	std::function<void()> output_code;
 };
