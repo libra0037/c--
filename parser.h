@@ -1,4 +1,5 @@
 #include <stack>
+#include <vector>
 #include <set>
 #include <unordered_map>
 #include <functional>
@@ -47,21 +48,21 @@ struct Token
 	int type, val;
 };
 
-using tails_attr = std::pair<int, std::set<std::pair<int, int*>>*>;
+using tails_attr = std::pair<int, std::vector<std::pair<int, int*>>*>;
 using code_generator = std::function<tails_attr(int&, int*)>;
 
 struct Node
 {
 	Node() {}
 	template<class T>
-	Node(int s, int l, T &&c, code_generator *g)
-		: state(s), line(l), chg_list(std::move(c)), gen(g)
+	Node(int s, int l, int g, T &&c)
+		: state(s), line(l), gen(g), chg_list(std::move(c))
 	{
 	}
 	int state;
 	int line;
+	int gen;
 	std::set<int> chg_list;
-	code_generator *gen;
 };
 
 class Parser
@@ -77,6 +78,6 @@ private:
 	int id_num;
 	std::unordered_map<std::string, int> sym_tab;
 	std::stack<Node> stk;
-	int regs, labels;
+	std::vector<code_generator> gens;
 	std::function<void()> output_code;
 };
