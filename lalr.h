@@ -76,6 +76,8 @@ factor	: INT
 %%
 */
 
+constexpr const char Prod[] = {2, 5, 3, nt_stmt_seq, 5, nt_stmt_seq, 3, nt_stmt_seq, 0, nt_stmt_seq, 3, nt_if_stmt, 4, nt_if_stmt, 1, nt_exp, 3, nt_exp, 6, nt_exp, 1, nt_rval, 2, nt_rval, 2, nt_rval, 2, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 3, nt_rval, 1, nt_factor, 1, nt_factor, 1, nt_factor, 3, nt_factor, 4, nt_factor};
+
 constexpr const char ac0[] = {Default, 0};
 constexpr const char ac1[] = {Default, 1};
 constexpr const char ac2[] = {Default, 2};

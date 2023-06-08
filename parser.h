@@ -1,3 +1,4 @@
+#include <string>
 #include <vector>
 #include <unordered_map>
 #include <functional>
@@ -5,7 +6,7 @@
 enum Token_t
 {
 	ENDF,	// EOF
-	INT,	// \d+
+	INT,	// [0-9]\w*
 	ID,		// [a-zA-Z_]\w*
 	IF,		// if
 	ELIF,	// elif
@@ -52,11 +53,7 @@ using code_generator = std::function<tails_attr(int&, int*)>;
 struct Node
 {
 	Node() {}
-	template<class T>
-	Node(int s, int l, int g, T &&c)
-		: state(s), line(l), gen(g), chg_list(std::move(c))
-	{
-	}
+	Node(int s, int l, int g): state(s), line(l), gen(g) {}
 	int state, line, gen;
 	std::vector<int> chg_list;
 };
@@ -71,6 +68,7 @@ private:
 private:
 	int now_line;
 	int nowc, nxtc;
+	int const_num, id_num;
 	std::unordered_map<std::string, int> sym_tab;
 	std::vector<Node> stk;
 	std::vector<code_generator> gens;
