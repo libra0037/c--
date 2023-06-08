@@ -1,4 +1,3 @@
-#include <stack>
 #include <vector>
 #include <unordered_map>
 #include <functional>
@@ -73,6 +72,6 @@ private:
 	int now_line;
 	int nowc, nxtc;
 	std::unordered_map<std::string, int> sym_tab;
-	std::stack<Node> stk;
+	std::vector<Node> stk;
 	std::vector<code_generator> gens;
 };
