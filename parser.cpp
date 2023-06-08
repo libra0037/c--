@@ -66,15 +66,14 @@ void Parser::reduce(int rule)
 {
 	static int id_num, regs, labels;
 	static const code_generator *f;
-	Node n1, n2, n3, n4, n6;
+	int top = stk.size();
+	Node *p = stk.data(), &n6 = p[top - 6], &n5 = p[top - 5], &n4 = p[top - 4], &n3 = p[top - 3], &n2 = p[top - 2], &n1 = p[top - 1];
 	int sym = -1, line = -1, gen = gens.size();
 	std::vector<int> chg_list;
 	switch(rule)
 	{
 	case 0: // program <- stmt_seq EOF
-		stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
-		stk.pop(); // empty the stack
+		stk.clear(); // accept
 		id_num = sym_tab.size();
 		regs = 1, labels = 1;
 		f = gens.data();
@@ -88,18 +87,16 @@ void Parser::reduce(int rule)
 				 "%r0 = add i32 0, 0");
 			int block = 0, *reg_list = new int[id_num];
 			memset(reg_list, 0, id_num * sizeof(int));
-			f[n1.gen](block, reg_list);
-			puts("ret i32 0\n}");
+			f[n2.gen](block, reg_list);
 			delete[] reg_list;
+			puts("ret i32 0\n}");
 		}
 		return;
 	case 1: // stmt_seq <- stmt_seq if_stmt SEMI
-		stk.pop();
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 3;
 		sym = nt_stmt_seq;
-		line = n1.line;
-		gens.push_back([gen1 = n1.gen, n2](int &block, int *reg_list)->tails_attr
+		line = n3.line;
+		gens.push_back([gen1 = n3.gen, n2](int &block, int *reg_list)->tails_attr
 		{
 			f[gen1](block, reg_list);
 			int *br_list = new int[id_num];
@@ -120,22 +117,18 @@ void Parser::reduce(int rule)
 			delete tail.second;
 			return {0, nullptr};
 		});
-		chg_list = std::move(n1.chg_list);
+		chg_list = std::move(n3.chg_list);
 		chg_list.insert(chg_list.cend(), n2.chg_list.begin(), n2.chg_list.end());
 		break;
 	case 2: // stmt_seq <- stmt_seq WHILE exp stmt_seq SEMI
-		stk.pop();
-		n4 = std::move(stk.top()); stk.pop();
-		n3 = std::move(stk.top()); stk.pop();
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 5;
 		sym = nt_stmt_seq;
-		line = n1.line;
+		line = n5.line;
 		chg_list = std::move(n3.chg_list);
-		chg_list.insert(chg_list.cend(), n4.chg_list.begin(), n4.chg_list.end());
+		chg_list.insert(chg_list.cend(), n2.chg_list.begin(), n2.chg_list.end());
 		std::sort(chg_list.begin(), chg_list.end());
 		chg_list.erase(std::unique(chg_list.begin(), chg_list.end()), chg_list.end());
-		gens.push_back([chg_list, line2 = n2.line, gen1 = n1.gen, gen3 = n3.gen, gen4 = n4.gen](int &block, int *reg_list)->tails_attr
+		gens.push_back([chg_list, line2 = n4.line, gen1 = n5.gen, gen3 = n3.gen, gen4 = n2.gen](int &block, int *reg_list)->tails_attr
 		{
 			f[gen1](block, reg_list);
 			const int sz = chg_list.size(), *id = chg_list.data();
@@ -164,22 +157,20 @@ void Parser::reduce(int rule)
 				   l1, block = l3, line2);
 			return {0, nullptr};
 		});
-		chg_list.insert(chg_list.cend(), n1.chg_list.begin(), n1.chg_list.end());
+		chg_list.insert(chg_list.cend(), n5.chg_list.begin(), n5.chg_list.end());
 		break;
 	case 3: // stmt_seq <- stmt_seq exp SEMI
-		stk.pop();
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 3;
 		sym = nt_stmt_seq;
-		line = n1.line;
-		gens.push_back([line2 = n2.line, gen1 = n1.gen, gen2 = n2.gen](int &block, int *reg_list)->tails_attr
+		line = n3.line;
+		gens.push_back([line2 = n2.line, gen1 = n3.gen, gen2 = n2.gen](int &block, int *reg_list)->tails_attr
 		{
 			f[gen1](block, reg_list);
 			printf("; expression statement in line %d\n", line2);
 			f[gen2](block, reg_list);
 			return {0, nullptr};
 		});
-		chg_list = std::move(n1.chg_list);
+		chg_list = std::move(n3.chg_list);
 		chg_list.insert(chg_list.cend(), n2.chg_list.begin(), n2.chg_list.end());
 		break;
 	case 4: // stmt_seq <- $epsilon
@@ -187,12 +178,10 @@ void Parser::reduce(int rule)
 		gen = 0;
 		break;
 	case 5: // if_stmt <- IF exp stmt_seq
-		n3 = std::move(stk.top()); stk.pop();
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 3;
 		sym = nt_if_stmt;
-		line = n1.line;
-		gens.push_back([line, gen2 = n2.gen, gen3 = n3.gen](int &block, int *reg_list)->tails_attr
+		line = n3.line;
+		gens.push_back([line, gen2 = n2.gen, gen3 = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			printf("; if-statement in line %d\n", line);
 			int tail = f[gen2](block, reg_list).first;
@@ -210,16 +199,13 @@ void Parser::reduce(int rule)
 			return {l3, tab};
 		});
 		chg_list = std::move(n2.chg_list);
-		chg_list.insert(chg_list.cend(), n3.chg_list.begin(), n3.chg_list.end());
+		chg_list.insert(chg_list.cend(), n1.chg_list.begin(), n1.chg_list.end());
 		break;
 	case 6: // if_stmt <- if_stmt ELIF exp stmt_seq
-		n4 = std::move(stk.top()); stk.pop();
-		n3 = std::move(stk.top()); stk.pop();
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 4;
 		sym = nt_if_stmt;
-		line = n1.line;
-		gens.push_back([line2 = n2.line, gen1 = n1.gen, gen3 = n3.gen, gen4 = n4.gen](int &block, int *reg_list)->tails_attr
+		line = n4.line;
+		gens.push_back([line2 = n3.line, gen1 = n4.gen, gen3 = n2.gen, gen4 = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			tails_attr tail1 = f[gen1](block, reg_list);
 			printf("; elif-statement in line %d\n", line2);
@@ -236,41 +222,34 @@ void Parser::reduce(int rule)
 			printf("br label %%L%d\nL%d:\n", tail1.first, block = l2);
 			return tail1;
 		});
-		chg_list = std::move(n1.chg_list);
-		chg_list.insert(chg_list.cend(), n3.chg_list.begin(), n3.chg_list.end());
-		chg_list.insert(chg_list.cend(), n4.chg_list.begin(), n4.chg_list.end());
+		chg_list = std::move(n4.chg_list);
+		chg_list.insert(chg_list.cend(), n2.chg_list.begin(), n2.chg_list.end());
+		chg_list.insert(chg_list.cend(), n1.chg_list.begin(), n1.chg_list.end());
 		break;
 	case 7: // exp <- rval
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 1;
 		sym = nt_exp;
 		line = n1.line;
 		gen = n1.gen;
 		chg_list = std::move(n1.chg_list);
 		break;
 	case 8: // exp <- ID ASSIGN exp
-		n3 = std::move(stk.top()); stk.pop();
-		stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 3;
 		sym = nt_exp;
-		line = n1.line;
-		gens.push_back([id = n1.gen, gen = n3.gen](int &block, int *reg_list)->tails_attr
+		line = n3.line;
+		gens.push_back([id = n3.gen, gen = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail = f[gen](block, reg_list).first;
 			return {reg_list[id] = tail, nullptr};
 		});
-		chg_list = std::move(n3.chg_list);
-		chg_list.push_back(n1.gen);
+		chg_list = std::move(n1.chg_list);
+		chg_list.push_back(n3.gen);
 		break;
 	case 9: // exp <- factor LBRAC exp RBRAC ASSIGN exp
-		n6 = std::move(stk.top()); stk.pop();
-		stk.pop();
-		stk.pop();
-		n3 = std::move(stk.top()); stk.pop();
-		stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 6;
 		sym = nt_exp;
-		line = n1.line;
-		gens.push_back([gen1 = n1.gen, gen3 = n3.gen, gen6 = n6.gen](int &block, int *reg_list)->tails_attr
+		line = n6.line;
+		gens.push_back([gen1 = n6.gen, gen3 = n4.gen, gen6 = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail6 = f[gen6](block, reg_list).first;
 			int tail1 = f[gen1](block, reg_list).first;
@@ -285,36 +264,34 @@ void Parser::reduce(int rule)
 				   tail6, r3);
 			return {tail6, nullptr};
 		});
-		chg_list = std::move(n1.chg_list);
-		chg_list.insert(chg_list.cend(), n3.chg_list.begin(), n3.chg_list.end());
-		chg_list.insert(chg_list.cend(), n6.chg_list.begin(), n6.chg_list.end());
+		chg_list = std::move(n6.chg_list);
+		chg_list.insert(chg_list.cend(), n4.chg_list.begin(), n4.chg_list.end());
+		chg_list.insert(chg_list.cend(), n1.chg_list.begin(), n1.chg_list.end());
 		break;
 	case 10: // rval <- factor
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 1;
 		sym = nt_rval;
 		line = n1.line;
 		gen = n1.gen;
 		chg_list = std::move(n1.chg_list);
 		break;
 	case 11: // rval <- PUTC factor
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 2;
 		sym = nt_rval;
-		line = n1.line;
-		gens.push_back([gen = n2.gen](int &block, int *reg_list)->tails_attr
+		line = n2.line;
+		gens.push_back([gen = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail = f[gen](block, reg_list).first;
 			printf("%%r%d = call i32 @putchar(i32 %%r%d)\n", regs, tail);
 			return {regs++, nullptr};
 		});
-		chg_list = std::move(n2.chg_list);
+		chg_list = std::move(n1.chg_list);
 		break;
 	case 12: // rval <- ALLOC factor
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 2;
 		sym = nt_rval;
-		line = n1.line;
-		gens.push_back([gen = n2.gen](int &block, int *reg_list)->tails_attr
+		line = n2.line;
+		gens.push_back([gen = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail = f[gen](block, reg_list).first;
 			int r1 = regs++, r2 = regs++;
@@ -322,20 +299,19 @@ void Parser::reduce(int rule)
 				   "%%r%d = call i32 @malloc(i32 %%r%d)\n", r1, tail, r2, r1);
 			return {r2, nullptr};
 		});
-		chg_list = std::move(n2.chg_list);
+		chg_list = std::move(n1.chg_list);
 		break;
 	case 13: // rval <- FREE factor
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 2;
 		sym = nt_rval;
-		line = n1.line;
-		gens.push_back([gen = n2.gen](int &block, int *reg_list)->tails_attr
+		line = n2.line;
+		gens.push_back([gen = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail = f[gen](block, reg_list).first;
 			printf("call void @free(i32 %%r%d)\n", tail);
 			return {0, nullptr};
 		});
-		chg_list = std::move(n2.chg_list);
+		chg_list = std::move(n1.chg_list);
 		break;
 	case 14: // rval <- rval TIMES rval
 	case 15: // rval <- rval DIV rval
@@ -346,12 +322,10 @@ void Parser::reduce(int rule)
 	case 20: // rval <- rval AND rval
 	case 21: // rval <- rval XOR rval
 	case 22: // rval <- rval OR rval
-		n3 = std::move(stk.top()); stk.pop();
-		stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 3;
 		sym = nt_rval;
-		line = n1.line;
-		gens.push_back([rule, gen1 = n1.gen, gen3 = n3.gen](int &block, int *reg_list)->tails_attr
+		line = n3.line;
+		gens.push_back([rule, gen1 = n3.gen, gen3 = n1.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail1 = f[gen1](block, reg_list).first;
 			int tail3 = f[gen3](block, reg_list).first;
@@ -359,11 +333,11 @@ void Parser::reduce(int rule)
 			if(rule / 2 == 9)printf("%%r%d = zext i1 %%r%d to i32\n", regs + 1, regs), regs++;
 			return {regs++, nullptr};
 		});
-		chg_list = std::move(n1.chg_list);
-		chg_list.insert(chg_list.cend(), n3.chg_list.begin(), n3.chg_list.end());
+		chg_list = std::move(n3.chg_list);
+		chg_list.insert(chg_list.cend(), n1.chg_list.begin(), n1.chg_list.end());
 		break;
 	case 23: // factor <- INT
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 1;
 		sym = nt_factor;
 		line = n1.line;
 		gens.push_back([val = n1.gen](int&, int*)->tails_attr
@@ -373,7 +347,7 @@ void Parser::reduce(int rule)
 		});
 		break;
 	case 24: // factor <- ID
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 1;
 		sym = nt_factor;
 		line = n1.line;
 		gens.push_back([id = n1.gen](int&, int *reg_list)->tails_attr
@@ -382,7 +356,7 @@ void Parser::reduce(int rule)
 		});
 		break;
 	case 25: // factor <- GETC
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 1;
 		sym = nt_factor;
 		line = n1.line;
 		gens.push_back([](int&, int*)->tails_attr
@@ -392,22 +366,17 @@ void Parser::reduce(int rule)
 		});
 		break;
 	case 26: // factor <- LPARE exp RPARE
-		stk.pop();
-		n2 = std::move(stk.top()); stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 3;
 		sym = nt_factor;
-		line = n1.line;
+		line = n3.line;
 		gen = n2.gen;
 		chg_list = std::move(n2.chg_list);
 		break;
 	case 27: // factor <- factor LBRAC exp RBRAC
-		stk.pop();
-		n3 = std::move(stk.top()); stk.pop();
-		stk.pop();
-		n1 = std::move(stk.top()); stk.pop();
+		top -= 4;
 		sym = nt_factor;
-		line = n1.line;
-		gens.push_back([gen1 = n1.gen, gen3 = n3.gen](int &block, int *reg_list)->tails_attr
+		line = n4.line;
+		gens.push_back([gen1 = n4.gen, gen3 = n2.gen](int &block, int *reg_list)->tails_attr
 		{
 			int tail1 = f[gen1](block, reg_list).first;
 			int tail3 = f[gen3](block, reg_list).first;
@@ -421,18 +390,19 @@ void Parser::reduce(int rule)
 				   r4, r3);
 			return {r4, nullptr};
 		});
-		chg_list = std::move(n1.chg_list);
-		chg_list.insert(chg_list.cend(), n3.chg_list.begin(), n3.chg_list.end());
+		chg_list = std::move(n4.chg_list);
+		chg_list.insert(chg_list.cend(), n2.chg_list.begin(), n2.chg_list.end());
 		break;
 	}
 	std::sort(chg_list.begin(), chg_list.end());
 	chg_list.erase(std::unique(chg_list.begin(), chg_list.end()), chg_list.end());
-	Node &top = stk.top();
+	stk.resize(top);
+	Node &nt = stk.back();
 	for(int i = 0; ; i += 2)
 	{
-		if(Goto[top.state][i] == sym)
+		if(Goto[nt.state][i] == sym)
 		{
-			stk.emplace(Goto[top.state][i + 1], line, gen, chg_list);
+			stk.emplace_back(Goto[nt.state][i + 1], line, gen, chg_list);
 			break;
 		}
 	}
@@ -440,7 +410,7 @@ void Parser::reduce(int rule)
 
 int Parser::parse()
 {
-	stk.emplace(0, 0, 0, std::vector<int>{});
+	for(int i = -5; i <= 0; i++)stk.emplace_back(i, -1, -1, std::vector<int>{});
 	gens.push_back([](int&, int*)->tails_attr { return {0, nullptr}; });
 	now_line = 1;
 	nxtc = getchar();
@@ -452,12 +422,12 @@ int Parser::parse()
 			fprintf(stderr, "Unknown token in line %d: %c\n", now_line, tk.val);
 			return 1;
 		}
-		Node &top = stk.top();
+		Node &top = stk.back();
 		for(int i = 0; ; i += 2)
 		{
 			if(Action[top.state][i] == tk.type)
 			{ // shift
-				stk.emplace(Action[top.state][i + 1], now_line, tk.val, std::vector<int>{});
+				stk.emplace_back(Action[top.state][i + 1], now_line, tk.val, std::vector<int>{});
 				tk = scan();
 				break;
 			}
