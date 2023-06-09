@@ -42,6 +42,19 @@ Reserved words and their equivalents in C/C++:
 
 Operators: `= < == + - * / % & | ^ []`. They do exactly the same operations as in C/C++.
 
+| Precedence | Operator        |
+| ---------- | --------------- |
+| 1          | () []           |
+| 2          | putc alloc free |
+| 3          | * / %           |
+| 4          | + -             |
+| 5          | <               |
+| 6          | ==              |
+| 7          | &               |
+| 8          | ^               |
+| 9          | \|              |
+| 10         | =               |
+
 ### Context-Free Grammar of C--
 
 program $\rightarrow$ stmt-seq **\<EOF\>**
@@ -62,7 +75,7 @@ calc-op $\rightarrow$ **\<AND, '&'\>** | **\<OR, '|'\>** | **\<XOR, '^'\>** | **
 
 exp $\rightarrow$ rval | **\<ID\>** **\<ASSIGN, '='\>** exp | factor array-op **\<ASSIGN, '='\>** exp
 
-rval $\rightarrow$ factor | **\<getc\>** | func-op factor | rval calc-op rval
+rval $\rightarrow$ factor | **\<getc\>** | func-op rval | rval calc-op rval
 
 factor $\rightarrow$ operand | factor array-op
 
