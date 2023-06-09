@@ -16,12 +16,13 @@ enum Token_t
 	ALLOC,	// alloc
 	FREE,	// free
 	ASSIGN,	// =
-	LT,		// <
-	EQ,		// ==
 	PLUS,	// +
 	MINUS,	// -
 	TIMES,	// *
 	DIV,	// /
+	MOD,	// %
+	LT,		// <
+	EQ,		// ==
 	AND,	// &
 	OR,		// |
 	XOR,	// ^
@@ -35,24 +36,22 @@ enum Token_t
 
 enum Nonterminal_t
 {
-	nt_factor,
-	nt_rval,
-	nt_exp,
-	nt_if_stmt,
 	nt_stmt_seq,
+	nt_if_stmt,
+	nt_exp,
+	nt_rval,
+	nt_factor,
 };
 
 struct Token
 {
-	int type, val;
+	int type, id;
 };
 
-using tails_attr = std::pair<int, std::vector<std::pair<int, int*>>*>;
-using code_generator = std::function<tails_attr(int&, int*)>;
+using code_generator = std::function<int(int&, int*)>;
 
 struct Node
 {
-	Node() {}
 	Node(int s, int l, int g): state(s), line(l), gen(g) {}
 	int state, line, gen;
 	std::vector<int> chg_list;
