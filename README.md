@@ -40,7 +40,7 @@ Reserved words and their equivalents in C/C++:
 -   $\mathbf{alloc}~fact$: `new int64_t[fact]`
 -   $\mathbf{free}~fact$: `delete fact`, except this always returns 0
 
-Operators: `= < == + - * / & | ^ []`. They do exactly the same operations as in C/C++.
+Operators: `= < == + - * / % & | ^ []`. They do exactly the same operations as in C/C++.
 
 ### Context-Free Grammar of C--
 
@@ -58,13 +58,13 @@ array-op $\rightarrow$ **\<LBRAC, '['\>** exp **\<RBRAC, ']'\>**
 
 func-op $\rightarrow$ **\<putc\>** | **\<alloc\>** | **\<free\>**
 
-calc-op $\rightarrow$ **\<AND, '&'\>** | **\<OR, '|'\>** | **\<XOR, '^'\>** | **\<LT, '<'\>** | **\<EQ, '=='\>** | **\<PLUS, '+'\>** | **\<MINUS, '-'\>** | **\<TIMES, '*'\>** | **\<DIV, '/'\>**
+calc-op $\rightarrow$ **\<AND, '&'\>** | **\<OR, '|'\>** | **\<XOR, '^'\>** | **\<LT, '<'\>** | **\<EQ, '=='\>** | **\<PLUS, '+'\>** | **\<MINUS, '-'\>** | **\<TIMES, '*'\>** | **\<DIV, '/'\>** | **\<MOD, '%'\>**
 
 exp $\rightarrow$ rval | **\<ID\>** **\<ASSIGN, '='\>** exp | factor array-op **\<ASSIGN, '='\>** exp
 
-rval $\rightarrow$ factor | func-op factor | rval calc-op rval
+rval $\rightarrow$ factor | **\<getc\>** | func-op factor | rval calc-op rval
 
 factor $\rightarrow$ operand | factor array-op
 
-operand $\rightarrow$ **\<INT\>** | **\<ID\>** | **\<getc\>** | **\<LPARE, '('\>** exp **\<RPARE, ')'\>**
+operand $\rightarrow$ **\<INT\>** | **\<ID\>** | **\<LPARE, '('\>** exp **\<RPARE, ')'\>**
 
