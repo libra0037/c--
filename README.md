@@ -10,7 +10,7 @@ clang -O3 main.cpp parser.cpp -o c--
 
 ### Usage
 
-To compiles C-- to LLVM IR, run
+To compile C-- to LLVM IR, run
 
 ```
 ./c-- name.c-- name.ll
@@ -26,6 +26,8 @@ clang -m64 -O3 name.ll -o name
 
 \*See *sqrt2.c--* and *bf.c--* for examples.\*
 
+The program starts with the first statement and ends after the last statement.
+
 All identifiers are global variables. All operands and results are 64-bit signed integers (aka `int64_t` in C/C++). The type turns to `int64_t *` temporarily when accessing memory with square brackets.
 
 Comments start with '#' and end at the end of the current line.
@@ -36,9 +38,9 @@ Reserved words and their equivalents in C/C++:
 -   $\mathbf{elif}~exp$: `else if(exp)`
 -   $\mathbf{while}~exp$: `while(exp)`
 -   $\mathbf{getc}$: `getchar()`
--   $\mathbf{putc}~fact$: `putchar(fact)`
--   $\mathbf{alloc}~fact$: `new int64_t[fact]`
--   $\mathbf{free}~fact$: `delete fact`, except this always returns 0
+-   $\mathbf{putc}~rval$: `putchar(rval)`
+-   $\mathbf{alloc}~rval$: `new int64_t[rval]`
+-   $\mathbf{free}~rval$: `delete rval`, except this always returns 0
 
 Operators: `= < == + - * / % & | ^ []`. They do exactly the same operations as in C/C++.
 
