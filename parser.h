@@ -57,10 +57,11 @@ struct Node
 	std::vector<int> chg_list;
 };
 
-class Parser
+class parse
 {
 public:
-	int parse();
+	parse();
+	int err;
 private:
 	Token scan();
 	void reduce(int rule);

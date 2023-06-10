@@ -9,7 +9,7 @@ constexpr const std::pair<const char*, int> reserved_word[8] = {{"free", FREE}, 
 constexpr const char *token_name[26] = {"<End of File>", "<Integer>", "<Identifier>", "if", "elif", "while", "getc", "putc", "alloc", "free", "'='", "'+'", "'-'", "'*'", "'/'", "'%'", "'<'", "'=='", "'&'", "'|'", "'^'", "'('", "')'", "'['", "']'", "';'"};
 constexpr const char *binary_op[10] = {"mul", "sdiv", "srem", "add", "sub", "icmp slt", "icmp eq", "and", "xor", "or"};
 
-Token Parser::scan()
+Token parse::scan()
 {
 	int type, id = -1;
 	for(int t = 1; ;)
@@ -34,12 +34,13 @@ Token Parser::scan()
 			nowc = nxtc, nxtc = getchar();
 			str += (char)nowc;
 		}
-		if(str == reserved_word[hash].first)type = reserved_word[hash].second;
-		else
+		if(strcmp(str.c_str(), reserved_word[hash].first))
 		{
-			if(!sym_tab.count(str))sym_tab[str] = type == INT ? const_num++ : id_num++;
-			id = sym_tab[str];
+			auto it = sym_tab.find(str);
+			if(it != sym_tab.end())id = it->second;
+			else sym_tab.emplace(std::move(str), id = type == INT ? const_num++ : id_num++);
 		}
+		else type = reserved_word[hash].second;
 	}
 	else if(type == ASSIGN)
 	{
@@ -62,12 +63,18 @@ void merge(std::vector<int> &a, std::vector<int> &b)
 	b.clear();
 }
 
-void Parser::reduce(int rule)
+#define n1 top[-1]
+#define n2 top[-2]
+#define n3 top[-3]
+#define n4 top[-4]
+#define n5 top[-5]
+#define n6 top[-6]
+
+void parse::reduce(int rule)
 {
 	static int id_num, regs, labels;
 	static const code_generator *f;
-	int top = stk.size();
-	Node *p = stk.data(), &n6 = p[top - 6], &n5 = p[top - 5], &n4 = p[top - 4], &n3 = p[top - 3], &n2 = p[top - 2], &n1 = p[top - 1];
+	auto top = stk.end();
 	int gen = gens.size();
 	switch(rule)
 	{
@@ -280,10 +287,10 @@ void Parser::reduce(int rule)
 		});
 		break;
 	case 25: // factor <- INT
-		gens.push_back([reg = n1.gen](int&, int*){return reg; });
+		gens.push_back([reg = n1.gen](int&, int*) { return reg; });
 		break;
 	case 26: // factor <- ID
-		gens.push_back([id = n1.gen](int&, int *reg_list){return reg_list[id]; });
+		gens.push_back([id = n1.gen](int&, int *reg_list) { return reg_list[id]; });
 		break;
 	case 27: // factor <- LPARE exp RPARE
 		gen = n2.gen;
@@ -307,28 +314,22 @@ void Parser::reduce(int rule)
 	}
 	_ASSERT(Prod[rule * 2] > 0);
 	top -= Prod[rule * 2];
-	Node &n0 = p[top];
-	auto st = Goto[p[top - 1].state];
-	for(int i = 0; ; i += 2)
+	const char *st = Goto[top[-1].state];
+	while(*st != Prod[rule * 2 + 1])st += 2;
+	top->state = st[1], top->gen = gen;
+	for(int i = Prod[rule * 2] - 1; i; i--)
 	{
-		if(st[i] == Prod[rule * 2 + 1])
-		{
-			n0.state = st[i + 1];
-			n0.gen = gen;
-			break;
-		}
+		merge(top->chg_list, stk.back().chg_list);
+		stk.pop_back();
 	}
-	for(int i = top + 1; i < stk.size(); i++)merge(n0.chg_list, p[i].chg_list);
-	_ASSERT(top + 1 > 6);
-	stk.erase(stk.begin() + top + 1, stk.end());
 }
 
-int Parser::parse()
+parse::parse()
 {
 	now_line = 1;
 	const_num = 1, id_num = 0;
-	sym_tab["0"] = 0;
-	for(int i = -5; i <= 0; i++)stk.emplace_back(i, -1, -1);
+	sym_tab.emplace(std::string{'0'}, 0);
+	stk.emplace_back(0, -1, -1);
 	gens.push_back([](int&, int*) { return 0; });
 	nxtc = getchar();
 	Token tk = scan();
@@ -336,31 +337,26 @@ int Parser::parse()
 	{
 		if(tk.type == Default)
 		{
-			fprintf(stderr, "Unknown token in line %d: %c\n", now_line, tk.id);
-			return 1;
+			err = 1;
+			fprintf(stderr, "Unknown token in line %d:  %c\n", now_line, tk.id);
+			return;
 		}
-		auto st = Action[stk.back().state];
-		for(int i = 0; ; i += 2)
+		const char *st = Action[stk.back().state];
+		while(*st != tk.type && *st != Default)st += 2;
+		if(*st == tk.type) // shift
 		{
-			if(st[i] == tk.type)
-			{ // shift
-				stk.emplace_back(st[i + 1], now_line, tk.id);
-				tk = scan();
-				break;
-			}
-			else if(st[i] == Default)
-			{
-				if(st[i + 1] == -1)
-				{ // error
-					fprintf(stderr, "Unexpected token in line %d: %s\n\texpected:", now_line, token_name[tk.type]);
-					for(i = 0; st[i] != Default; i += 2)fprintf(stderr, " %s", token_name[st[i]]);
-					fputc('\n', stderr);
-					return 2;
-				}
-				reduce(st[i + 1]);
-				break;
-			}
+			stk.emplace_back(st[1], now_line, tk.id);
+			tk = scan();
+		}
+		else if(st[1] != -1)reduce(st[1]); // reduce
+		else // error
+		{
+			err = 2;
+			fprintf(stderr, "Unexpected token in line %d:  %s\n\texpected:", now_line, token_name[tk.type]);
+			for(st = Action[stk.back().state]; *st != Default; st += 2)fprintf(stderr, "  %s", token_name[*st]);
+			fputc('\n', stderr);
+			return;
 		}
 	} while(stk.size());
-	return 0;
+	err = 0;
 }
