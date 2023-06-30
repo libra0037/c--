@@ -1,204 +1,180 @@
-# This program reads an integer n and print sqrt(2) with n digits.
-# The algorithm is based on continued fractions of sqrt(2) and matrix multiplication.
+# This program reads an integer n and prints sqrt(2) with n digits.
+# Using Newton's method and Number Theoretic Transform.
 
 while 47 < (c = getc) & c < 58
 	n = n * 10 + c - 48;
 ;
-p = 1;
-(a = alloc(len_a = 1))[0] = 1;
-(b = alloc(len_b = 1))[0] = 2;
-while p < n
-	mul1 = mul2 = a;
-	len1 = len2 = len_a;
-	mul3 = alloc(len3 = len1 + len2 + 5);
-	i = 0;
-	while i < len3
-		mul3[i] = 0;
+n = n + 4;
+if 134217728 < n
+	n = 134217728;
+;
+mod = 2013265921;
+len = 1;
+while len < n
+	len = len * 2;
+;
+Rev = alloc(len * 2);
+Rev[1] = 0;
+i = j = 1;
+while j < len
+	while i < j * 2
+		Rev[i * 2] = Rev[i];
+		Rev[i * 2 + 1] = Rev[i] | j;
 		i = i + 1;
 	;
+	j = j * 2;
+;
+l = 67108864;
+w = 137;
+while l < len == 0
+	w = w * w % mod;
+	l = l / 2;
+;
+W = alloc len;
+W[l] = i = 1;
+while i < l
+	W[i + l] = W[i + l - 1] * w % mod;
+	i = i + 1;
+;
+i = l - 1;
+while i
+	W[i] = W[i * 2];
+	i = i - 1;
+;
+x = alloc 2;
+x[0] = l = 1; x[1] = l2 = 4;
+inv2 = (mod * 3 + 1) / 4;
+while l < n
+	rev = Rev + l2 * 8;
+	new_x = alloc l2;
+	xn = alloc l2;
+	_i = x2 = alloc l2;
+	_o = x2n = alloc l2;
 	i = 0;
-	while i < len3
-		j = 0;
-		while j < i + 1
-			if j < len1 t1 = mul1[j];
-			elif 1 t1 = 0;
+	while i < l2 / 2
+		x2[i] = x[i];
+		i = i + 1;
+	;
+	while i < l2
+		x2[i] = 0;
+		i = i + 1;
+	;
+	s = free x;
+	while s < 4
+		i = 0;
+		while i < l2
+			_o[rev[i]] = _i[i];
+			i = i + 1;
+		;
+		i = 1;
+		while i < l2
+			w = W + i * 8;
+			j = 0;
+			while j < l2
+				q = (p = _o + j * 8) + i * 8;
+				k = 0;
+				while k < i
+					t = q[k] * w[k] % mod;
+					q[k] = (p[k] + mod - t) % mod;
+					p[k] = (p[k] + t) % mod;
+					k = k + 1;
+				;
+				j = j + i + i;
 			;
-			if i - j < len2 t2 = mul2[i - j];
-			elif 1 t2 = 0;
+			i = i * 2;
+		;
+		if s & 1
+			x2[0] = x2[0] * inv2 % mod;
+			i = 1; j = l2 - 1;
+			while j < i == 0
+				t = x2[i] * inv2 % mod;
+				x2[i] = x2[j] * inv2 % mod;
+				x2[j] = t;
+				i = i + 1;
+				j = j - 1;
 			;
-			mul3[i] = mul3[i] + t1 * t2;
-			k = i;
-			while 9999 < (t3 = mul3[k])
-				mul3[k + 1] = mul3[k + 1] + t3 / 10000;
-				mul3[k] = t3 - t3 / 10000 * 10000;
-				k = k + 1;
+			c = 0;
+			if s & 2
+				i = l2 + b - 1;
+				while i < l2 == 0
+					t = x2[i - b] + c;
+					c = t / 10;
+					i = i - 1;
+				;
+				while i < b == 0
+					t = x2[i - b] + new_x[i] + c;
+					c = t / 10;
+					new_x[i] = t % 10;
+					i = i - 1;
+				;
+				while c
+					t = new_x[i] + c;
+					c = t / 10;
+					new_x[i] = t % 10;
+					i = i - 1;
+				;
+			elif 1
+				i = l2 - 1;
+				while i
+					t = x2[i] + c;
+					c = t / 10;
+					if t = t % 10
+						x2[i] = 10 - t;
+						c = c + 1;
+						b = i;
+					elif 1
+						x2[i] = 0;
+					;
+					i = i - 1;
+				;
+				if x2[b] < 4 b = b + 1; ;
+				c = x2[b - 1];
+				i = 0;
+				while i < l2 / 2 & i < l2 - b
+					t = x2[i + b] + c * 10;
+					c = t % 4;
+					x2[i] = t / 4;
+					i = i + 1;
+				;
+				while i < l2
+					x2[i] = 0;
+					i = i + 1;
+				;
 			;
-			j = j + 1;
-		;
-		i = i + 1;
-	;
-	while mul3[len3 - 1] == 0 len3 = len3 - 1; ;
-	a2 = mul3; len_a2 = len3;
-	mul1 = mul2 = b;
-	len1 = len2 = len_b;
-	mul3 = alloc(len3 = len1 + len2 + 5);
-	i = 0;
-	while i < len3
-		mul3[i] = 0;
-		i = i + 1;
-	;
-	i = 0;
-	while i < len3
-		j = 0;
-		while j < i + 1
-			if j < len1 t1 = mul1[j];
-			elif 1 t1 = 0;
+		elif 1
+			i = 0;
+			while i < l2
+				if (s & 2) == 0
+					new_x[i] = x2[i];
+					xn[i] = x2n[i];
+				;
+				x2n[i] = x2n[i] * xn[i] % mod;
+				i = i + 1;
 			;
-			if i - j < len2 t2 = mul2[i - j];
-			elif 1 t2 = 0;
-			;
-			mul3[i] = mul3[i] + t1 * t2;
-			k = i;
-			while 9999 < (t3 = mul3[k])
-				mul3[k + 1] = mul3[k + 1] + t3 / 10000;
-				mul3[k] = t3 - t3 / 10000 * 10000;
-				k = k + 1;
-			;
-			j = j + 1;
 		;
-		i = i + 1;
+		t = _i;
+		_i = _o;
+		_o = t;
+		s = s + 1;
 	;
-	while mul3[len3 - 1] == 0 len3 = len3 - 1; ;
-	b2 = mul3; len_b2 = len3;
-	mul1 = a; mul2 = b;
-	len1 = len_a; len2 = len_b;
-	mul3 = alloc(len3 = len1 + len2 + 5);
-	i = 0;
-	while i < len3
-		mul3[i] = 0;
-		i = i + 1;
+	free xn;
+	free x2;
+	free x2n;
+	x = new_x;
+	l = l * 2;
+	if l2 < len
+		l2 = l2 * 2;
+		inv2 = inv2 * ((mod + 1) / 2) % mod;
 	;
-	i = 0;
-	while i < len3
-		j = 0;
-		while j < i + 1
-			if j < len1 t1 = mul1[j];
-			elif 1 t1 = 0;
-			;
-			if i - j < len2 t2 = mul2[i - j];
-			elif 1 t2 = 0;
-			;
-			mul3[i] = mul3[i] + t1 * t2;
-			k = i;
-			while 9999 < (t3 = mul3[k])
-				mul3[k + 1] = mul3[k + 1] + t3 / 10000;
-				mul3[k] = t3 - t3 / 10000 * 10000;
-				k = k + 1;
-			;
-			j = j + 1;
-		;
-		i = i + 1;
-	;
-	while mul3[len3 - 1] == 0 len3 = len3 - 1; ;
-	ab = mul3; len_ab = len3;
-	free a;
-	free b;
-	a = alloc(len_a = len_b2 + 5);
-	i = 0;
-	while i < len_a
-		a[i] = 0;
-		i = i + 1;
-	;
-	i = 0;
-	while i < len_a
-		if i < len_a2 t1 = a2[i];
-		elif 1 t1 = 0;
-		;
-		if i < len_b2 t2 = b2[i];
-		elif 1 t2 = 0;
-		;
-		a[i] = a[i] + t1 + t2;
-		if 9999 < a[i]
-			a[i] = a[i] - 10000;
-			a[i + 1] = a[i + 1] + 1;
-		;
-		i = i + 1;
-	;
-	while a[len_a - 1] == 0 len_a = len_a - 1; ;
-	b = alloc(len_b = len_b2 + 5);
-	i = 0;
-	while i < len_b
-		b[i] = 0;
-		i = i + 1;
-	;
-	i = 0;
-	while i < len_b
-		if i < len_ab t1 = ab[i];
-		elif 1 t1 = 0;
-		;
-		if i < len_b2 t2 = b2[i];
-		elif 1 t2 = 0;
-		;
-		b[i] = b[i] + (t1 + t2) * 2;
-		if 19999 < b[i]
-			b[i] = b[i] - 20000;
-			b[i + 1] = b[i + 1] + 2;
-		;
-		if 9999 < b[i]
-			b[i] = b[i] - 10000;
-			b[i + 1] = b[i + 1] + 1;
-		;
-		i = i + 1;
-	;
-	while b[len_b - 1] == 0 len_b = len_b - 1; ;
-	free a2;
-	free b2;
-	free ab;
-	p = p * 2;
 ;
 putc 49;
 putc 46;
-i = 0;
-while i < n
-	j = 0;
-	while j < len_a
-		a[j] = a[j] * 10;
-		j = j + 1;
-	;
-	j = 0;
-	while j < len_a
-		t1 = a[j];
-		a[j + 1] = a[j + 1] + t1 / 10000;
-		a[j] = t1 - t1 / 10000 * 10000;
-		j = j + 1;
-		if (0 < a[j]) & (len_a < j + 1) len_a = j + 1; ;
-	;
-	c = 48;
-	t1 = 1;
-	while t1
-		if len_a < len_b j = len_b - 1;
-		elif 1 j = len_a - 1;
-		;
-		while a[j] == b[j] j = j - 1; ;
-		if b[j] < a[j]
-			j = 0;
-			while j < len_a
-				a[j] = a[j] - b[j];
-				if a[j] < 0
-					a[j] = a[j] + 10000;
-					a[j + 1] = a[j + 1] - 1;
-				;
-				j = j + 1;
-			;
-			if a[len_a - 1] == 0 len_a = len_a - 1; ;
-			c = c + 1;
-		elif 1
-			t1 = 0;
-		;
-	;
-	putc c;
+i = 1;
+while i < n - 3
+	putc(x[i] ^ 48);
 	i = i + 1;
 ;
+free x;
+free Rev;
+free W;
 putc 10;
-free a;
-free b;
